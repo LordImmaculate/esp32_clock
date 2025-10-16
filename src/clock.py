@@ -113,6 +113,12 @@ def clock_task():
         else:
             lcd.clear()
             lcd.putstr(get_formatted_time(first_run))
+            lcd.move_to(0, 1)
+            lcd.putstr(
+                "Alarm: {:02}:{:02}".format(
+                    globals.SETTINGS["alarm_hour"][0], globals.SETTINGS["alarm_hour"][1]
+                )
+            )
             if first_run:
                 backlight_on_time = time.time()
                 lcd.backlight_on()

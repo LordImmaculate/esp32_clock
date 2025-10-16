@@ -104,17 +104,31 @@ def start_web_server():
                 password = form.get("password", "")
                 summer = int(form.get("summer", 2))
                 winter = int(form.get("winter", 1))
+                alarm_hour = form.get("alarm", "7:00")
+
+                if ":" in alarm_hour:
+                    ah, am = alarm_hour.split(":", 1)
+                    try:
+                        ah = int(ah)
+                        am = int(am)
+                        if 0 <= ah < 24 and 0 <= am < 60:
+                            alarm_hour = [ah, am]
+                        else:
+                            alarm_hour = [7, 0]  # default
+                    except Exception:
+                        alarm_hour = [7, 0]  # default
 
                 globals.SETTINGS = {
                     "ssid": ssid,
                     "password": password,
                     "summer": summer,
                     "winter": winter,
+                    "alarm_hour": alarm_hour,
                 }
 
                 save_settings("settings.json", globals.SETTINGS)
                 print(
-                    f"Saved settings: SSID={ssid}, PASSWORD={password}, SUMMER={summer}, WINTER={winter}"
+                    f"Saved settings: SSID={ssid}, PASSWORD={password}, SUMMER={summer}, WINTER={winter}, ALARM={alarm_hour}"
                 )
 
                 # Respond with a simple redirect back to root (or a confirmation)
@@ -126,18 +140,16 @@ def start_web_server():
                 continue
 
             # Generate the HTML content (use current settings if available)
-            if isinstance(globals.SETTINGS, dict):
-                ssid_value = globals.SETTINGS.get("ssid", "")
-                pw_value = globals.SETTINGS.get("password", "")
-                summer_value = globals.SETTINGS.get("summer", 1)
-                winter_value = globals.SETTINGS.get("winter", 0)
-            else:
-                ssid_value = getattr(globals.SETTINGS, "ssid", "")
-                pw_value = getattr(globals.SETTINGS, "password", "")
-                summer_value = getattr(globals.SETTINGS, "summer", 1)
-                winter_value = getattr(globals.SETTINGS, "winter", 0)
 
-            response_html = web_page(ssid_value, pw_value, summer_value, winter_value)
+            ssid_value = globals.SETTINGS.get("ssid", "")
+            pw_value = globals.SETTINGS.get("password", "")
+            summer_value = globals.SETTINGS.get("summer", 1)
+            winter_value = globals.SETTINGS.get("winter", 0)
+            alarm_hour_value = globals.SETTINGS.get("alarm_hour", [7, 0])
+
+            response_html = web_page(
+                ssid_value, pw_value, summer_value, winter_value, alarm_hour_value
+            )
 
             # Construct the HTTP Response Header
             response_header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n"
@@ -161,7 +173,7 @@ def start_web_server():
             )  # Small delay to avoid hammering the connection if errors persist
 
 
-def web_page(ssid, password, summer, winter):
+def web_page(ssid, password, summer, winter, alarm_hour):
     try:
         html = open("website.html", "r").read()
     except Exception:
@@ -171,4 +183,5 @@ def web_page(ssid, password, summer, winter):
     html = html.replace("{PASSWORD}", password)
     html = html.replace("{SUMMER}", str(summer))
     html = html.replace("{WINTER}", str(winter))
+    html = html.replace("{ALARM_HOUR}", f"{alarm_hour[0]:02}:{alarm_hour[1]:02}")
     return html
