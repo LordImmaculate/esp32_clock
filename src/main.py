@@ -3,11 +3,13 @@
 # Connects to Wi-Fi and starts a simple socket server on port 80.
 # Serves a basic HTML page showing the device's IP address.
 
+from clock import clock_task
 import network  # type: ignore
-import socket
 import time
-from settings import save_settings, load_settings
+from settings import load_settings, save_settings
 from webserver import start_web_server
+import _thread
+import globals
 
 # --- 1. WiFi Connection Setup ---
 
@@ -53,24 +55,35 @@ def connect_to_wifi(ssid, password):
 
 
 def main():
-    settings = load_settings("settings.json")
-    if (settings["ssid"] is None) or (settings["password"] is None):
-        print("SSID or password missing in settings.")
+    globals.SETTINGS = load_settings("settings.json")
+    if (globals.SETTINGS["ssid"] is None) or (globals.SETTINGS["password"] is None):
+        globals.LCD_MESSAGE = "No WiFi settings!\nFlash manually."
+        print("No WiFi settings found. Please flash manually.")
         return
 
-    if not settings:
-        print("No settings found. Please flash manually.")
+    if not globals.SETTINGS:
+        globals.LCD_MESSAGE = "No WiFi settings!\nFlash manually."
+        print("No WiFi settings found. Please flash manually.")
         return
 
-    print("Loaded settings:", settings)
+    print("Loaded settings:", globals.SETTINGS)
 
-    # 3a. Connect to WiFi
-    ip_address = connect_to_wifi(settings["ssid"], settings["password"])
-    if not ip_address:
+    if ("summer" not in globals.SETTINGS) or ("winter" not in globals.SETTINGS):
+        globals.SETTINGS["summer"] = 2
+        globals.SETTINGS["winter"] = 1
+        save_settings("settings.json", globals.SETTINGS)
+
+    _thread.start_new_thread(clock_task, ())
+
+    globals.IP = connect_to_wifi(globals.SETTINGS["ssid"], globals.SETTINGS["password"])
+    if not globals.IP:
+        globals.LCD_MESSAGE = "WiFi Conn. failed!\nFlash manually."
         print("WiFi Connection failed. Please flash manually.")
         return
 
-    start_web_server(ip_address, settings)
+    globals.LCD_MESSAGE = None
+
+    start_web_server()
 
 
 # --- 4. Initialization ---

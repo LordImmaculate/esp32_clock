@@ -2,11 +2,10 @@
 <html>
 
 <head>
-    <title>ESP32 MicroServer</title>
+    <title>ESP32 Klok</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
-
             font-family: sans-serif;
             background-color: #f4f7f6;
             display: flex;
@@ -14,19 +13,16 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-
         }
 
         .card {
-
             background-color: white;
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
-            max-width: 400px;
+            max-width: 700px;
             width: 90%;
-
         }
 
         h1 {
@@ -79,7 +75,7 @@
 
 <body>
     <div class="card">
-        <h1>ESP32 Clock Settings</h1>
+        <h1>ESP32 Klok Instellingen</h1>
         <p>Verander hier de instellingen van de ESP32 Klok</p>
         <form action="/save" method="POST">
             <div class="input-form">
@@ -87,12 +83,21 @@
                 <input type="text" id="ssid" name="ssid" value="{SSID}" style="margin-left: 10px;" required>
             </div>
             <div class="input-form">
-                <label for="password">WiFi Password:</label>
+                <label for="password">WiFi Wachtwoord:</label>
                 <input type="password" id="password" name="password" value="{PASSWORD}" style="margin-left: 10px;"
                     required>
             </div>
-            <button type="submit" class="save-button">Save Settings</button>
+            <div class="input-form">
+                <label for="summer">Zomertijd Offset:</label>
+                <input type="number" id="summer" name="summer" value="{SUMMER}" style="margin-left: 10px;" required>
+            </div>
+            <div class="input-form">
+                <label for="winter">Wintertijd Offset:</label>
+                <input type="number" id="winter" name="winter" value="{WINTER}" style="margin-left: 10px;" required>
+            </div>
+            <button type="submit" class="save-button">Instellingen Opslaan</button>
         </form>
+        <p style="margin-top: 5px">De instellingen worden gebruikt wanneer de ESP32 opnieuw opstart.</p>
     </div>
 </body>
 

@@ -1,7 +1,7 @@
 import socket
 import time
-import json
 from machine import Pin  # type: ignore
+import globals
 
 from settings import save_settings
 
@@ -37,17 +37,17 @@ def _parse_form(body):
     return params
 
 
-def start_web_server(ip_address, settings):
+def start_web_server():
     led = Pin(2, Pin.OUT)  # On-board LED for ESP32
     # AF_INET = IPv4, SOCK_STREAM = TCP
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(("", 80))  # Bind to all interfaces on port 80 (standard HTTP)
     s.listen(5)  # Listen for up to 5 pending connections
 
-    if settings is None:
-        settings = {"ssid": ""}
+    if globals.SETTINGS is None:
+        globals.SETTINGS = {"ssid": ""}
 
-    print("Web Server started. Listening on http://" + ip_address)
+    print("Web Server started. Listening on http://" + globals.IP)
     led.on()
     while True:
         conn = None
@@ -102,13 +102,20 @@ def start_web_server(ip_address, settings):
                 form = _parse_form(body)
                 ssid = form.get("ssid", "")
                 password = form.get("password", "")
+                summer = int(form.get("summer", 2))
+                winter = int(form.get("winter", 1))
 
-                # Persist settings to settings.json
-                try:
-                    with open("settings.json", "w") as f:
-                        json.dump({"ssid": ssid, "password": password}, f)
-                except Exception as e:
-                    print("Error saving settings:", e)
+                globals.SETTINGS = {
+                    "ssid": ssid,
+                    "password": password,
+                    "summer": summer,
+                    "winter": winter,
+                }
+
+                save_settings("settings.json", globals.SETTINGS)
+                print(
+                    f"Saved settings: SSID={ssid}, PASSWORD={password}, SUMMER={summer}, WINTER={winter}"
+                )
 
                 # Respond with a simple redirect back to root (or a confirmation)
                 response_header = (
@@ -119,14 +126,18 @@ def start_web_server(ip_address, settings):
                 continue
 
             # Generate the HTML content (use current settings if available)
-            if isinstance(settings, dict):
-                ssid_value = settings.get("ssid", "")
-                pw_value = settings.get("password", "")
+            if isinstance(globals.SETTINGS, dict):
+                ssid_value = globals.SETTINGS.get("ssid", "")
+                pw_value = globals.SETTINGS.get("password", "")
+                summer_value = globals.SETTINGS.get("summer", 1)
+                winter_value = globals.SETTINGS.get("winter", 0)
             else:
-                ssid_value = getattr(settings, "ssid", "")
-                pw_value = getattr(settings, "password", "")
+                ssid_value = getattr(globals.SETTINGS, "ssid", "")
+                pw_value = getattr(globals.SETTINGS, "password", "")
+                summer_value = getattr(globals.SETTINGS, "summer", 1)
+                winter_value = getattr(globals.SETTINGS, "winter", 0)
 
-            response_html = web_page(ssid_value, pw_value)
+            response_html = web_page(ssid_value, pw_value, summer_value, winter_value)
 
             # Construct the HTTP Response Header
             response_header = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n"
@@ -150,7 +161,7 @@ def start_web_server(ip_address, settings):
             )  # Small delay to avoid hammering the connection if errors persist
 
 
-def web_page(ssid, password=""):
+def web_page(ssid, password, summer, winter):
     try:
         html = open("website.html", "r").read()
     except Exception:
@@ -158,4 +169,6 @@ def web_page(ssid, password=""):
         html = """HTML Missing"""
     html = html.replace("{SSID}", ssid)
     html = html.replace("{PASSWORD}", password)
+    html = html.replace("{SUMMER}", str(summer))
+    html = html.replace("{WINTER}", str(winter))
     return html
