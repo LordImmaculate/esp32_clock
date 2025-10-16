@@ -86,8 +86,8 @@ def get_formatted_time(first_run):
     # 5. Convert the adjusted seconds back to a local time tuple
     t_local = time.localtime(local_time_s)
 
-    formatted_time = "{:04}-{:02}-{:02} {:02}:{:02}:{:02}".format(
-        t_local[0], t_local[1], t_local[2], t_local[3], t_local[4], t_local[5]
+    formatted_time = "{:02}:{:02}     {:02}-{:02}-{:04}".format(
+        t_local[3], t_local[4], t_local[2], t_local[1], t_local[0]
     )
     return formatted_time
 
