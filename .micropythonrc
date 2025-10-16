@@ -1,0 +1,22 @@
+{
+  "upload": {
+    "port": "/dev/tty.usbserial-0001",
+    "baud": 115200
+  },
+  "serial": {
+    "port": "/dev/tty.usbserial-0001",
+    "baud": 115200
+  },
+  "ignore": {
+    "extensions": [
+      ".micropythonrc"
+    ],
+    "directories": [
+      ".vscode"
+    ]
+  },
+  "tools": {
+    "ampy": "/Users/emild/Library/Python/3.14/bin/ampy",
+    "rshell": "/Users/emild/Library/Python/3.14/bin/rshell"
+  }
+}
