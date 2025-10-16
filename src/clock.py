@@ -102,7 +102,7 @@ def clock_task():
 
     first_run = True
 
-    backlight_on_time = time.time()
+    backlight_on_time = 0
     backlight_timeout = 10  # seconds
 
     while True:
@@ -113,7 +113,10 @@ def clock_task():
         else:
             lcd.clear()
             lcd.putstr(get_formatted_time(first_run))
-            first_run = False
+            if first_run:
+                backlight_on_time = time.time()
+                lcd.backlight_on()
+                first_run = False
 
         if (time.time() - backlight_on_time) > backlight_timeout:
             lcd.backlight_off()
