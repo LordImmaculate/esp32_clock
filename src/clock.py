@@ -3,6 +3,7 @@ import time
 import ntptime  # type: ignore
 from machine import Pin, SoftI2C  # type: ignore
 from machine_i2c_lcd import I2cLcd  # type: ignore
+import _thread
 import globals
 
 
@@ -89,7 +90,7 @@ def get_formatted_time(first_run):
     formatted_time = "{:02}:{:02}     {:02}-{:02}-{:04}".format(
         t_local[3], t_local[4], t_local[2], t_local[1], t_local[0]
     )
-    return formatted_time
+    return [formatted_time, t_local]
 
 
 def clock_task():
@@ -103,16 +104,41 @@ def clock_task():
     first_run = True
 
     backlight_on_time = 0
-    backlight_timeout = 10  # seconds
+    backlight_timeout = 999  # seconds
+    alarm_triggered = False
+    previous_time = None
+    previous_alarm = globals.SETTINGS["alarm_hour"]
 
     while True:
         time.sleep(1)
+        current_time = get_formatted_time(first_run)
+
+        if (
+            current_time[1][3] == globals.SETTINGS["alarm_hour"][0]
+            and current_time[1][4] == globals.SETTINGS["alarm_hour"][1]
+        ):
+            if not alarm_triggered:
+                backlight_on_time = time.time()
+                lcd.backlight_on()
+                alarm_triggered = True
+
+        if alarm_triggered:
+            if lcd.backlight:
+                lcd.backlight_off()
+            else:
+                lcd.backlight_on()
+
         if globals.LCD_MESSAGE is not None:
             lcd.clear()
             lcd.putstr(globals.LCD_MESSAGE)
-        else:
+        elif (
+            current_time[0] != previous_time
+            or globals.SETTINGS["alarm_hour"] != previous_alarm
+        ):
+            previous_time = current_time[0]
+            previous_alarm = globals.SETTINGS["alarm_hour"]
             lcd.clear()
-            lcd.putstr(get_formatted_time(first_run))
+            lcd.putstr(current_time[0])
             lcd.move_to(0, 1)
             lcd.putstr(
                 "Alarm: {:02}:{:02}".format(
@@ -124,5 +150,7 @@ def clock_task():
                 lcd.backlight_on()
                 first_run = False
 
-        if (time.time() - backlight_on_time) > backlight_timeout:
+        if (
+            time.time() - backlight_on_time
+        ) > backlight_timeout and not alarm_triggered:
             lcd.backlight_off()

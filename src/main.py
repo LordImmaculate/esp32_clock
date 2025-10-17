@@ -77,13 +77,13 @@ def main():
         globals.SETTINGS["alarm_hour"] = [7, 0]  # Default alarm time 07:00
         save_settings("settings.json", globals.SETTINGS)
 
-    _thread.start_new_thread(clock_task, ())
-
     globals.IP = connect_to_wifi(globals.SETTINGS["ssid"], globals.SETTINGS["password"])
     if not globals.IP:
         globals.LCD_MESSAGE = "WiFi Conn. failed!\nFlash manually."
         print("WiFi Connection failed. Please flash manually.")
         return
+
+    _thread.start_new_thread(clock_task, ())
 
     globals.LCD_MESSAGE = None
 
